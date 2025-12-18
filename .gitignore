@@ -1,0 +1,34 @@
+.idea/
+# Среды разработки (IDE)
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python (Временные файлы)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# Django (Локальные данные)
+db.sqlite3
+db.sqlite3-journal
+media/
+static_root/
+staticfiles/
+
+# Логи и отчеты
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Операционная система
+.DS_Store
+Thumbs.db
