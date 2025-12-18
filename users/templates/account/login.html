@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+{% load crispy_forms_tags %}
+
+{% block head_title %}{% trans "Sign In" %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+            <div class="col-md-6 col-lg-5">
+                <div class="card border-0 shadow-lg" style="border-radius: 15px;">
+                    <div class="card-body p-5">
+
+                        <h2 class="text-center fw-bold mb-4">{% trans "С возвращением!" %}</h2>
+
+                        <div class="d-grid gap-2">
+
+                            <form method="post" action="{% provider_login_url 'google' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-dark btn-lg w-100 py-2 fs-6 shadow-sm"
+                                        style="border-radius: 10px;">
+                                    <img src="https://authjs.dev/img/providers/google.svg" alt="Google" width="20"
+                                         class="me-2">
+                                    {% trans "Войти через Google" %}
+                                </button>
+                            </form>
+                                                    <a href="{% provider_login_url 'yandex' %}" class="btn btn-outline-dark btn-lg py-2 fs-6 shadow-sm" style="border-radius: 10px;">
+                                                        <img src="https://authjs.dev/img/providers/yandex.svg" alt="Yandex" width="20" class="me-2">
+                                                        {% trans "Войти через Yandex" %}
+                                                    </a>
+                        </div>
+
+                        <div class="position-relative my-4">
+                            <hr class="text-muted">
+                            <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
+                            {% trans "или почту" %}
+                        </span>
+                        </div>
+
+                        <form class="login" method="POST" action="{% url 'account_login' %}">
+                            {% csrf_token %}
+
+                            {{ form|crispy }}
+
+                            {% if redirect_field_value %}
+                                <input type="hidden" name="{{ redirect_field_name }}"
+                                       value="{{ redirect_field_value }}"/>
+                            {% endif %}
+
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                </div>
+                                <a class="text-decoration-none small fw-bold" href="{% url 'account_reset_password' %}">
+                                    {% trans "Забыли пароль?" %}
+                                </a>
+                            </div>
+
+                            <div class="d-grid shadow-sm">
+                                <button class="btn btn-primary btn-lg py-2" type="submit"
+                                        style="border-radius: 10px; background-color: #4e73df;">
+                                    {% trans "Войти" %}
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mt-4">
+                            <p class="mb-0 text-muted">
+                                {% blocktrans %}Нет аккаунта?
+                                    <a href="{{ signup_url }}" class="text-primary fw-bold text-decoration-none">Регистрация</a>{% endblocktrans %}
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
