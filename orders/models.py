@@ -1,9 +1,11 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from users.models import CustomUser
+
 
 class Banner(models.Model):
-    user = models.OneToOneField(User, on_delete = models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete = models.CASCADE)
     width = models.FloatField(default=0, verbose_name="Ширина", help_text="Указывается в см.")
     length = models.FloatField(default=0, verbose_name="Длина", help_text="Указывается в см.")
     banner_text = models.CharField(max_length=50, verbose_name='Текст баннера')
