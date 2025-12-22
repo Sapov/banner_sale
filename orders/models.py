@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.urls import reverse
 
 from users.models import CustomUser
 
@@ -14,13 +15,6 @@ class StatusOrder(models.TextChoices):
     READY = "READY", "ГОТОВ"
     CLOSED = "CLOSED", "ЗАКРЫТ"
 
-    name = models.CharField(max_length=48, verbose_name="Статус заказа")
-    is_active = models.BooleanField(default=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.name}"
 
     class Meta:
         verbose_name_plural = "Статусы ЗАКАЗА"
@@ -48,9 +42,8 @@ class Order(models.Model):
         blank=True,
     )
     comments = models.TextField(verbose_name="Комментарии к заказу", blank=True)
-    status = models.ForeignKey(
-        StatusOrder, on_delete=models.CASCADE, verbose_name="Статус заказа", default=1
-    )
+    status = models.CharField(max_length=24, choices=StatusOrder.choices, default=StatusOrder.PREPARING)
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(  # переименовать в юзера!!!!!
@@ -74,26 +67,72 @@ class Order(models.Model):
         return reverse("orders:add_file_in_order", args=[self.id])
 
 
+from django.db import models
+from django.core.files.base import ContentFile
+from io import BytesIO
+from PIL import Image
+import base64
+
 
 class Banner(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete = models.CASCADE)
+    GROMMET_CHOICES = [
+        ('perimeter', 'По периметру'),
+        ('corners', 'По углам'),
+        ('none', 'Без люверсов'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     width = models.FloatField(default=0, verbose_name="Ширина", help_text="Указывается в см.")
-    length = models.FloatField(default=0, verbose_name="Длина", help_text="Указывается в см.")
+    height = models.FloatField(default=0, verbose_name="Высота", help_text="Указывается в см.")
     banner_text = models.CharField(max_length=50, verbose_name='Текст баннера')
     banner_phone = models.CharField(max_length=15, verbose_name='Телефон')
-    background_color = models.CharField(max_length=10, verbose_name='цвет фона')
-    font_color = models.CharField(max_length=10, verbose_name='цвет букв')
-    grommet = models.ForeignKey('self',on_delete = models.PROTECT,related_name = 'Люверсы')
+    background_color = models.CharField(max_length=10, verbose_name='Цвет фона')
+    font_color = models.CharField(max_length=10, verbose_name='Цвет букв')
+    grommet = models.CharField(
+        max_length=20,
+        choices=GROMMET_CHOICES,
+        default='none',
+        verbose_name='Люверсы'
+    )
     quantity = models.IntegerField(default=1, help_text="Введите количество", verbose_name="Количество")
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Добавлено")  # date created
+    image = models.ImageField(
+        upload_to='banners/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        verbose_name="Изображение баннера"
+    )
+    image_base64 = models.TextField(blank=True, verbose_name="Base64 изображения")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Добавлено")
 
+    def __str__(self):
+        return f"Баннер {self.id} - {self.width}x{self.height}см"
 
+    def save_image_from_base64(self, base64_string):
+        """Сохраняет изображение из base64 строки"""
+        if not base64_string:
+            return
 
+        # Удаляем префикс data:image/png;base64,
+        if 'base64,' in base64_string:
+            format, imgstr = base64_string.split(';base64,')
+            ext = format.split('/')[-1]
+        else:
+            imgstr = base64_string
+            ext = 'png'
 
-class Grommet(models.Model):
-    type_grommet = models.CharField(max_length = 100, verbose_name = 'grommet')
+        # Декодируем base64
+        data = base64.b64decode(imgstr)
 
+        # Создаем изображение в памяти
+        image = Image.open(BytesIO(data))
+
+        # Сохраняем в поле image
+        filename = f'banner_{self.id}_{self.created_at.strftime("%Y%m%d_%H%M%S")}.{ext}'
+        self.image.save(filename, ContentFile(data), save=False)
+
+        # Сохраняем base64 в отдельное поле (опционально)
+        self.image_base64 = base64_string
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Ордер")
