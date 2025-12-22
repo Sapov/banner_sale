@@ -4,7 +4,7 @@ from django.db import models
 from users.models import CustomUser
 
 
-class StatusOrder(models.Model):
+class StatusOrder(models.TextChoices):
 
     PREPARING = "PREPARING", "ГОТОВИТЬСЯ"
     DECORATED = "DECORATED", "ОФОРМЛЕН"
