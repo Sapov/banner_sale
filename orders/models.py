@@ -39,15 +39,7 @@ class Order(models.Model):
         verbose_name="Общая Себестоимость",
         blank=True,
     )
-    organisation_payer = models.ForeignKey(
-        Organisation,
-        on_delete=models.CASCADE,
-        verbose_name="Организация плательщик",
-        help_text="Выберите организацию плательщик",
-        null=True,
-        blank=True,
-        default=1
-    )
+
     paid = models.BooleanField(verbose_name="Заказ оплачен", default=False)
     date_complete = models.DateTimeField(
         verbose_name="Дата готовности заказа",
@@ -62,7 +54,7 @@ class Order(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(  # переименовать в юзера!!!!!
-        settings.AUTH_USER_MODEL,
+        CustomUser,
         on_delete=models.CASCADE,
         verbose_name="Заказчик",
         default=1,
