@@ -6,8 +6,6 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 import json
 import base64
-from io import BytesIO
-from PIL import Image
 from .models import Banner
 
 
