@@ -9,7 +9,7 @@ import base64
 from .models import Banner
 
 
-class BannerGeneratorView(LoginRequiredMixin, View):
+class BannerGeneratorView(View):
     """View для генерации и сохранения баннеров"""
 
     def get(self, request):
@@ -17,7 +17,7 @@ class BannerGeneratorView(LoginRequiredMixin, View):
         Отображает страницу генератора баннеров.
         """
         context = {
-            'title': 'Генератор баннеров',
+            'title': 'Заказать баннер "ПРОДАЮ"',
             'page_name': 'banner_generator',
         }
 

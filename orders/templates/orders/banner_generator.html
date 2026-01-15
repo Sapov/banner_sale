@@ -4,8 +4,6 @@
 {% load crispy_forms_tags %}
 
 
-{% block title %}Все статьи{% endblock %}
-
 {% block content %}
 
     <head>
@@ -148,9 +146,11 @@
                 cursor: pointer;
             }
         </style>
+    <title>{{ title }}</title>
+
     </head>
     <body>
-    <h1>Создать баннер</h1>
+    <h1>Заказать баннер в три клика</h1>
 
     <div class="container">
         <div class="form-container">
@@ -216,7 +216,6 @@
         <div class="preview-container">
             <canvas id="bannerCanvas"></canvas>
             <div class="info-text" id="sizeInfo"></div>
-            <button id="saveBtn" style="background-color: #f44336; margin-top: 10px;">Сохранить в БД</button>
             <button id="downloadBtn" class="download-btn" disabled>Скачать баннер</button>
 
         </div>
@@ -470,153 +469,10 @@
 
         const saveBtn = document.getElementById('saveBtn');
 
-        saveBtn.addEventListener('click', function () {
-            // Собираем данные из полей ввода
-            const bannerData = {
-                width: document.getElementById('width').value,
-                height: document.getElementById('height').value,
-                text: document.getElementById('text').value,
-                phone: document.getElementById('phone').value,
-                bgColor: document.getElementById('bgColor').value,
-                textColor: document.getElementById('textColor').value,
-                grommetType: document.querySelector('input[name="grommetType"]:checked').value
-            };
 
-            // Отправляем на сервер через Fetch API
-            fetch('/banner-generator/', {  // Укажите ваш URL из urls.py
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken') // Функция получения токена (ниже)
-                },
-                body: JSON.stringify(bannerData)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        alert('Баннер успешно сохранен!');
-                    } else {
-                        alert('Ошибка: ' + data.message);
-                    }
-                });
-        });
 
-        // Вспомогательная функция для CSRF (стандарт для Django)
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
 
-        // Добавьте этот код в конец существующего скрипта
 
-// Функция для сохранения баннера на сервере
-function saveBannerToServer() {
-    const widthMM = parseInt(widthInput.value);
-    const heightMM = parseInt(heightInput.value);
-    const text = textInput.value;
-    const phone = phoneInput.value;
-    const bgColor = bgColorInput.value;
-    const textColor = textColorInput.value;
-    const grommetType = document.querySelector('input[name="grommetType"]:checked').value;
-
-    // Получаем изображение из canvas в base64
-    const imageDataURL = canvas.toDataURL('image/png');
-
-    const bannerData = {
-        width: widthMM,
-        height: heightMM,
-        text: text,
-        phone: phone,
-        bgColor: bgColor,
-        textColor: textColor,
-        grommetType: grommetType,
-        image: imageDataURL  // добавляем base64 изображение
-    };
-
-    // Отображаем индикатор загрузки
-    const saveBtn = document.getElementById('saveBtn');
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = 'Сохранение...';
-    saveBtn.disabled = true;
-
-    // Отправляем данные на сервер
-    fetch(window.location.href, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken(),
-        },
-        body: JSON.stringify(bannerData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            alert('Баннер успешно сохранен!');
-
-            // Можно перенаправить на страницу просмотра баннера
-            if (data.redirect_url) {
-                window.location.href = data.redirect_url;
-            }
-        } else {
-            alert('Ошибка сохранения: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка при сохранении');
-    })
-    .finally(() => {
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
-    });
-}
-
-// Функция для получения CSRF токена
-function getCSRFToken() {
-    const cookieValue = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('csrftoken='))
-        ?.split('=')[1];
-    return cookieValue || '';
-}
-
-// Добавьте кнопку сохранения при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    // ... существующий код ...
-
-    // Добавляем кнопку сохранения после кнопки загрузки
-    const downloadBtn = document.getElementById('downloadBtn');
-    const saveBtn = document.createElement('button');
-    saveBtn.id = 'saveBtn';
-    saveBtn.textContent = 'Сохранить в базу данных';
-    saveBtn.style.backgroundColor = '#4CAF50';
-    saveBtn.style.marginTop = '10px';
-
-    saveBtn.onclick = saveBannerToServer;
-
-    // Вставляем кнопку сохранения после кнопки загрузки
-    downloadBtn.parentNode.insertBefore(saveBtn, downloadBtn.nextSibling);
-
-    // Сделаем кнопку сохранения активной только когда canvas готов
-    saveBtn.disabled = true;
-
-    // Обновляем состояние кнопки сохранения после генерации
-    generateBtn.addEventListener('click', function() {
-        setTimeout(() => {
-            saveBtn.disabled = false;
-        }, 100);
-    });
-});
     </script>
     </body>
     </html>
