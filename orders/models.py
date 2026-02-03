@@ -179,42 +179,6 @@ class OrderItem(models.Model):
         verbose_name_plural = "Товары в заказе"
         verbose_name = "Товар в заказе"
 
-#
-# # models.py
-# from django.db import models
-#
-#
-# class BannerOrder(models.Model):
-#     GROMMET_CHOICES = [
-#         ('perimeter', 'По периметру'),
-#         ('corners', 'По углам'),
-#         ('none', 'Без люверсов'),
-#     ]
-#
-#     width = models.IntegerField(verbose_name='Ширина (мм)')
-#     height = models.IntegerField(verbose_name='Высота (мм)')
-#     text = models.CharField(max_length=255, verbose_name='Текст')
-#     phone = models.CharField(max_length=20, verbose_name='Телефон')
-#     bg_color = models.CharField(max_length=7, verbose_name='Цвет фона')
-#     text_color = models.CharField(max_length=7, verbose_name='Цвет текста')
-#     grommet_type = models.CharField(
-#         max_length=10,
-#         choices=GROMMET_CHOICES,
-#         verbose_name='Тип люверсов'
-#     )
-#     image = models.ImageField(
-#         upload_to='banners/%Y/%m/%d/',
-#         verbose_name='Изображение баннера',
-#         null=True,
-#         blank=True
-#     )
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-#
-#     def __str__(self):
-#         return f"Баннер {self.text} - {self.width}x{self.height}мм"
-
-
 
 class BannerOrder(models.Model):
     GROMMET_CHOICES = [
@@ -237,9 +201,3 @@ class BannerOrder(models.Model):
     def __str__(self):
         return f"Баннер {self.id}-{self.width}x{self.height} - {self.created_at}"
 
-
-class MyModel(models.Model):
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    canvas_image = models.ImageField(upload_to='canvas_images/')
-    created_at = models.DateTimeField(auto_now_add=True)

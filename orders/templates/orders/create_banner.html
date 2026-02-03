@@ -3,7 +3,6 @@
 {% load account socialaccount %}
 {% load crispy_forms_tags %}
 
-
 {% block content %}
 
 <head>
@@ -260,6 +259,8 @@
     </div>
 </form>
 
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById('bannerCanvas');
@@ -495,21 +496,21 @@
         function submitOrder() {
             // Сначала генерируем баннер, чтобы canvas был актуальным
             generateBanner();
-            
+
             // Показываем сообщение о загрузке
             showMessage('Отправка заказа...', 'info');
-            
+
             // Создаем FormData из формы
             const formData = new FormData(form);
-            
+
             // Добавляем изображение из canvas
             canvas.toBlob(function(blob) {
                 // Создаем файл из blob
                 const file = new File([blob], "banner.png", { type: "image/png" });
-                
+
                 // Добавляем файл в FormData
                 formData.append('canvas_image', file);
-                
+
                 // Отправляем на сервер
                 fetch('{% url "submit_banner_order" %}', {
                     method: 'POST',
@@ -549,7 +550,7 @@
             messageContainer.textContent = message;
             messageContainer.className = 'message ' + type;
             messageContainer.style.display = 'block';
-            
+
             // Прокручиваем к сообщению
             messageContainer.scrollIntoView({ behavior: 'smooth' });
         }
@@ -575,7 +576,7 @@
 
         // Генерируем начальный баннер
         generateBanner();
-        
+
         // Обработчик для предотвращения стандартной отправки формы при нажатии Enter
         form.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
