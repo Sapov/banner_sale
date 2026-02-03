@@ -167,8 +167,9 @@ import json
 
 @csrf_exempt
 def submit_banner_order(request):
-    print(request)
     print(request.POST.get('text'))
+    print(request.POST.get('user'))
+    print(request.user)
     print(request.FILES.get('canvas_image'))
 
     if request.method == 'POST':
@@ -176,6 +177,7 @@ def submit_banner_order(request):
             # Получаем данные из формы
             width = request.POST.get('width')
             height = request.POST.get('height')
+            user = request.user
             text = request.POST.get('text')
             phone = request.POST.get('phone')
             bg_color = request.POST.get('bg_color')
@@ -194,6 +196,7 @@ def submit_banner_order(request):
                     width=width,
                     height=height,
                     text=text,
+                    user=user,
                     phone=phone,
                     bg_color=bg_color,
                     text_color=text_color,

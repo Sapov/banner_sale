@@ -1,9 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 
-from users.models import CustomUser
+from django.conf import settings
 
+User = get_user_model()
 
 class StatusOrder(models.TextChoices):
 
@@ -47,7 +49,7 @@ class Order(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(  # переименовать в юзера!!!!!
-        CustomUser,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name="Заказчик",
         default=1,
@@ -81,7 +83,11 @@ class Banner(models.Model):
         ('none', 'Без люверсов'),
     ]
 
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="Заказчик",
+    )
     width = models.FloatField(default=0, verbose_name="Ширина", help_text="Указывается в см.")
     height = models.FloatField(default=0, verbose_name="Высота", help_text="Указывается в см.")
     banner_text = models.CharField(max_length=50, verbose_name='Текст баннера')
@@ -218,6 +224,7 @@ class BannerOrder(models.Model):
     ]
 
     width = models.IntegerField(verbose_name="Ширина (мм)")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     height = models.IntegerField(verbose_name="Высота (мм)")
     text = models.CharField(max_length=255, verbose_name="Текст баннера")
     phone = models.CharField(max_length=50, verbose_name="Телефон")
@@ -228,7 +235,7 @@ class BannerOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     def __str__(self):
-        return f"Баннер {self.width}x{self.height} - {self.created_at}"
+        return f"Баннер {self.id}-{self.width}x{self.height} - {self.created_at}"
 
 
 class MyModel(models.Model):

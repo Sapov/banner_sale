@@ -178,7 +178,7 @@
 
 </head>
 <body>
-<h1>Заказать баннер в три клика</h1>
+<h1>Заказать баннер</h1>
 
 <!-- Добавляем форму для отправки данных -->
 <form id="bannerForm" method="post" enctype="multipart/form-data">
@@ -206,6 +206,7 @@
             <div class="form-group">
                 <label for="text">Текст баннера:</label>
                 <input type="text" id="text" name="text" value="АРЕНДА">
+                <input type="hidden" id="user" name="user" value={{user}}>
             </div>
 
             <div class="form-group">
@@ -269,6 +270,7 @@
         const sizeInfo = document.getElementById('sizeInfo');
         const messageContainer = document.getElementById('messageContainer');
         const form = document.getElementById('bannerForm');
+        const user = document.getElementById('userDropdown');
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
         // Элементы формы
