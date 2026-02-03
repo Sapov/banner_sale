@@ -1,0 +1,246 @@
+document.addEventListener('DOMContentLoaded', function () {
+    const canvas = document.getElementById('bannerCanvas');
+    const ctx = canvas.getContext('2d');
+    const generateBtn = document.getElementById('generateBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const sizeInfo = document.getElementById('sizeInfo');
+
+    // Элементы формы
+    const widthInput = document.getElementById('width');
+    const heightInput = document.getElementById('height');
+    const textInput = document.getElementById('text');
+    const phoneInput = document.getElementById('phone');
+    const bgColorInput = document.getElementById('bgColor');
+    const textColorInput = document.getElementById('textColor');
+    const grommetRadios = document.querySelectorAll('input[name="grommetType"]');
+
+    // Константы для преобразования мм в пиксели (предполагаем 96 DPI)
+    const MM_TO_PX = 96 / 25.4;
+
+    // Параметры люверсов
+    const GROMMET_DIAMETER_MM = 8;
+    const GROMMET_RADIUS_MM = GROMMET_DIAMETER_MM / 2;
+    const GROMMET_SPACING_MM = 300; // Расстояние между центрами люверсов
+    const GROMMET_MARGIN_MM = 25; // Отступ от края
+
+    // Функция для преобразования мм в пиксели
+    function mmToPx(mm) {
+        return mm * MM_TO_PX;
+    }
+
+    // Функция для поиска оптимального размера шрифта
+    function findOptimalFontSize(ctx, text, maxWidth, minFontSize = 10, maxFontSize = 1600) {
+        if (!text) return minFontSize;
+
+        let fontSize = minFontSize;
+        let textWidth;
+
+        for (let size = minFontSize; size <= maxFontSize; size++) {
+            ctx.font = `bold ${size}px Arial`;
+            textWidth = ctx.measureText(text).width;
+            if (textWidth > maxWidth) {
+                return Math.max(size - 1, minFontSize);
+            }
+        }
+
+        return maxFontSize;
+    }
+
+    // Функция для рисования люверсов по периметру
+    function drawPerimeterGrommets(widthMM, heightMM) {
+        const grommetRadiusPx = mmToPx(GROMMET_RADIUS_MM);
+        const marginPx = mmToPx(GROMMET_MARGIN_MM);
+        const spacingPx = mmToPx(GROMMET_SPACING_MM);
+
+        ctx.fillStyle = 'silver';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+
+        // Рассчитываем количество люверсов на каждой стороне
+        const widthPx = mmToPx(widthMM);
+        const heightPx = mmToPx(heightMM);
+
+        // Верхняя сторона
+        const topGrommets = calculateGrommetPositions(widthMM, GROMMET_MARGIN_MM, GROMMET_SPACING_MM);
+        topGrommets.forEach(xMM => {
+            const xPx = mmToPx(xMM);
+            drawGrommet(xPx, marginPx, grommetRadiusPx);
+        });
+
+        // Нижняя сторона
+        const bottomGrommets = calculateGrommetPositions(widthMM, GROMMET_MARGIN_MM, GROMMET_SPACING_MM);
+        bottomGrommets.forEach(xMM => {
+            const xPx = mmToPx(xMM);
+            drawGrommet(xPx, heightPx - marginPx, grommetRadiusPx);
+        });
+
+        // Левая сторона (без угловых, т.к. они уже нарисованы)
+        const leftGrommets = calculateGrommetPositions(heightMM, GROMMET_MARGIN_MM, GROMMET_SPACING_MM);
+        leftGrommets.forEach(yMM => {
+            // Пропускаем первый и последний (угловые)
+            if (yMM > GROMMET_MARGIN_MM && yMM < heightMM - GROMMET_MARGIN_MM) {
+                const yPx = mmToPx(yMM);
+                drawGrommet(marginPx, yPx, grommetRadiusPx);
+            }
+        });
+
+        // Правая сторона (без угловых)
+        const rightGrommets = calculateGrommetPositions(heightMM, GROMMET_MARGIN_MM, GROMMET_SPACING_MM);
+        rightGrommets.forEach(yMM => {
+            // Пропускаем первый и последний (угловые)
+            if (yMM > GROMMET_MARGIN_MM && yMM < heightMM - GROMMET_MARGIN_MM) {
+                const yPx = mmToPx(yMM);
+                drawGrommet(widthPx - marginPx, yPx, grommetRadiusPx);
+            }
+        });
+    }
+
+    // Функция для расчета позиций люверсов на одной стороне
+    function calculateGrommetPositions(lengthMM, marginMM, spacingMM) {
+        const positions = [];
+        const effectiveLength = lengthMM - 2 * marginMM;
+        const count = Math.max(2, Math.floor(effectiveLength / spacingMM) + 1);
+        const actualSpacing = effectiveLength / (count - 1);
+
+        for (let i = 0; i < count; i++) {
+            positions.push(marginMM + i * actualSpacing);
+        }
+
+        return positions;
+    }
+
+    // Функция для рисования люверсов по углам
+    function drawCornerGrommets(widthMM, heightMM) {
+        const grommetRadiusPx = mmToPx(GROMMET_RADIUS_MM);
+        const marginPx = mmToPx(GROMMET_MARGIN_MM);
+        const widthPx = mmToPx(widthMM);
+        const heightPx = mmToPx(heightMM);
+
+        ctx.fillStyle = 'silver';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+
+        // Четыре угла
+        drawGrommet(marginPx, marginPx, grommetRadiusPx); // Левый верхний
+        drawGrommet(widthPx - marginPx, marginPx, grommetRadiusPx); // Правый верхний
+        drawGrommet(marginPx, heightPx - marginPx, grommetRadiusPx); // Левый нижний
+        drawGrommet(widthPx - marginPx, heightPx - marginPx, grommetRadiusPx); // Правый нижний
+    }
+
+    // Функция для рисования одного люверса
+    function drawGrommet(x, y, radius) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    }
+
+    // Функция для генерации баннера
+    function generateBanner() {
+        const widthMM = parseInt(widthInput.value);
+        const heightMM = parseInt(heightInput.value);
+        const text = textInput.value;
+        const phone = phoneInput.value;
+        const bgColor = bgColorInput.value;
+        const textColor = textColorInput.value;
+        const grommetType = document.querySelector('input[name="grommetType"]:checked').value;
+
+        // Преобразуем размеры в пиксели
+        const widthPx = mmToPx(widthMM);
+        const heightPx = mmToPx(heightMM);
+
+        // Устанавливаем размеры canvas
+        canvas.width = widthPx;
+        canvas.height = heightPx;
+
+        // Обновляем информацию о размерах
+        sizeInfo.textContent = `Размер: ${widthMM}×${heightMM} мм (${Math.round(widthPx)}×${Math.round(heightPx)} px)`;
+
+        // Очищаем canvas
+        ctx.clearRect(0, 0, widthPx, heightPx);
+
+        // Рисуем фон
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, widthPx, heightPx);
+
+        // Рисуем люверсы в зависимости от выбранного типа
+        if (grommetType === 'perimeter') {
+            drawPerimeterGrommets(widthMM, heightMM);
+        } else if (grommetType === 'corners') {
+            drawCornerGrommets(widthMM, heightMM);
+        }
+        // Для 'none' ничего не рисуем
+
+        // Если нет текста и телефона, выходим
+        if (!text && !phone) {
+            downloadBtn.disabled = false;
+            return;
+        }
+
+        // Настраиваем стиль текста
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Рассчитываем доступную ширину с отступами (20 мм с каждой стороны)
+        const paddingPx = mmToPx(20);
+        const availableWidth = widthPx - 2 * paddingPx;
+
+        // Сначала находим оптимальный размер шрифта для телефона
+        let phoneFontSize = 10;
+        if (phone) {
+            phoneFontSize = findOptimalFontSize(ctx, phone, availableWidth);
+        }
+
+        // Теперь находим оптимальный размер шрифта для текста
+        let textFontSize = 10;
+        if (text) {
+            ctx.font = `bold ${phoneFontSize}px Arial`;
+            const phoneWidth = ctx.measureText(phone).width;
+
+            textFontSize = findOptimalFontSize(ctx, text, phoneWidth);
+        }
+
+        // Распределяем текст по вертикали
+        const totalHeight = (text ? textFontSize : 0) + (phone ? phoneFontSize + 10 : 0);
+        const startY = (heightPx - totalHeight) / 2;
+
+        // Рисуем основной текст
+        if (text) {
+            ctx.font = `bold ${textFontSize}px Arial`;
+            const textY = startY + (textFontSize / 2);
+            ctx.fillText(text, widthPx / 2, textY);
+        }
+
+        // Рисуем телефон
+        if (phone) {
+            ctx.font = `bold ${phoneFontSize}px Arial`;
+            const phoneY = startY + (text ? textFontSize + 10 : 0) + (phoneFontSize / 2);
+            ctx.fillText(phone, widthPx / 2, phoneY);
+        }
+
+        // Активируем кнопку скачивания
+        downloadBtn.disabled = false;
+    }
+
+    // Обработчик для кнопки генерации
+    generateBtn.addEventListener('click', generateBanner);
+
+    // Обработчики для радиокнопок
+    grommetRadios.forEach(radio => {
+        radio.addEventListener('change', generateBanner);
+    });
+
+    // Обработчик для кнопки скачивания
+    downloadBtn.addEventListener('click', function () {
+        const link = document.createElement('a');
+        link.download = 'banner.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // Генерируем начальный баннер
+    generateBanner();
+});
+
+

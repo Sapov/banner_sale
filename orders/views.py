@@ -128,7 +128,7 @@ class BannerGeneratorView(View):
 
 
 # views.py
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 
 
 class BannerDetailView(LoginRequiredMixin, DetailView):
@@ -139,3 +139,105 @@ class BannerDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         # Пользователь может видеть только свои баннеры
         return Banner.objects.filter(user=self.request.user)
+
+
+# views.py
+import json
+import base64
+from django.core.files.base import ContentFile
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect
+from .models import BannerOrder
+from .forms import BannerOrderForm
+import re
+
+
+def create_banner_view(request):
+    if request.method == 'POST':
+        try:
+            # Получаем JSON данные
+            data = json.loads(request.body)
+
+            # Извлекаем данные
+            width = data.get('width')
+            height = data.get('height')
+            text = data.get('text')
+            phone = data.get('phone')
+            bg_color = data.get('bg_color')
+            text_color = data.get('text_color')
+            grommet_type = data.get('grommet_type')
+            image_data = data.get('image_data')
+
+            # Обрабатываем base64 изображение
+            if image_data:
+                # Удаляем префикс data:image/png;base64,
+                format, imgstr = image_data.split(';base64,')
+                ext = format.split('/')[-1]
+
+                # Декодируем base64
+                image_data = base64.b64decode(imgstr)
+                image_file = ContentFile(image_data, name=f'banner_{text}.{ext}')
+
+            # Создаем объект заказа
+            order = BannerOrder(
+                width=width,
+                height=height,
+                text=text,
+                phone=phone,
+                bg_color=bg_color,
+                text_color=text_color,
+                grommet_type=grommet_type,
+            )
+
+            if image_file:
+                order.image.save(f'banner_{text}.{ext}', image_file)
+
+            order.save()
+
+            return JsonResponse({
+                'success': True,
+                'order_id': order.id,
+                'message': 'Заказ успешно создан'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+
+    # GET запрос - показать страницу
+    return render(request, 'orders/banner.html')
+
+
+# Или с использованием Django форм:
+@csrf_exempt
+def order_banner(request):
+    if request.method == 'POST':
+        form = BannerOrderForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            order = form.save()
+
+            # Если нужно обработать изображение из canvas
+            if 'image' in request.FILES:
+                order.image = request.FILES['image']
+                order.save()
+
+            return JsonResponse({
+                'success': True,
+                'order_id': order.id
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            })
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+class Banners_ListView(LoginRequiredMixin, ListView):
+    model = BannerOrder
+    template_name = 'orders/banner_list.html'

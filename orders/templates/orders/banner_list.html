@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+{% load crispy_forms_tags %}
+
+
+{% block content %}
+
+<h1>Book List</h1>
+<ul>
+    {% for book in object_list %}
+        <li>{{ book.title }} by {{ book.author }}</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
