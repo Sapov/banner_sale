@@ -183,7 +183,7 @@
 <!-- Добавляем форму для отправки данных -->
 <form id="bannerForm" method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    
+
     <!-- Сообщения об успехе/ошибке -->
     <div id="messageContainer" class="message" style="display: none;"></div>
 
@@ -246,11 +246,11 @@
             </div>
 
             <button type="button" id="generateBtn">Сгенерировать баннер</button>
-            
+
             <!-- Кнопка для отправки заказа -->
             <button type="button" id="submitOrderBtn" class="submit-btn">Отправить заказ</button>
         </div>
-        
+
         <div class="preview-container">
             <canvas id="bannerCanvas"></canvas>
             <div class="info-text" id="sizeInfo"></div>
@@ -529,6 +529,8 @@
                         setTimeout(() => {
                             messageContainer.style.display = 'none';
                         }, 5000);
+                                    window.location.href = '/banners_list/';
+
                     } else {
                         showMessage('Ошибка: ' + data.message, 'error');
                     }

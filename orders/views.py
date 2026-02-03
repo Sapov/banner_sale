@@ -271,6 +271,3 @@ def upload_view(request):
         'status': 'error',
         'message': 'Неверный запрос'
     }, status=400)
-
-def up(request):
-    return render(request, 'orders/01.html')

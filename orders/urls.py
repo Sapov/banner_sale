@@ -9,6 +9,5 @@ urlpatterns = [
                   path('banners_list/', Banners_ListView.as_view(), name='banners_list'),
                   path('submit-banner-order/', submit_banner_order, name='submit_banner_order'),
                   path('upload/', upload_view, name='upload'),
-                  path('up/', up, name='up'),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
