@@ -1,0 +1,39 @@
+<form id="myForm" method="post" enctype="multipart/form-data">
+  <input type="text" name="title" id="title">
+  <input type="text" name="description" id="description">
+</form>
+
+<canvas id="myCanvas" width="500" height="300"></canvas>
+<button onclick="submitForm()">Отправить</button>
+
+<script>
+function submitForm() {
+  const canvas = document.getElementById('myCanvas');
+  const form = document.getElementById('myForm');
+
+  // 1. Получаем данные из формы
+  const formData = new FormData(form);
+
+  // 2. Добавляем картинку из canvas
+  canvas.toBlob(function(blob) {
+    // Создаем файл из blob
+    const file = new File([blob], "canvas_image.png", { type: "image/png" });
+
+    // Добавляем файл в FormData
+    formData.append('canvas_image', file);
+
+    // 3. Добавляем CSRF токен
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    formData.append('csrfmiddlewaretoken', csrfToken);
+
+    // 4. Отправляем на сервер
+    fetch('/upload/', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => console.log('Success:', data))
+    .catch(error => console.error('Error:', error));
+  }, 'image/png');
+}
+</script>

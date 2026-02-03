@@ -21,7 +21,7 @@ class BannerGeneratorView(View):
             'page_name': 'banner_generator',
         }
 
-        return render(request, 'orders/banner_generator.html', context)
+        return render(request, 'orders/create_banner.html', context)
 
     def post(self, request):
         """
@@ -99,32 +99,6 @@ class BannerGeneratorView(View):
 
         return base_price
 
-    def save_base64_image(self, banner, base64_string):
-        """Сохраняет изображение из base64 строки"""
-        if not base64_string or 'base64,' not in base64_string:
-            return
-
-        try:
-            # Удаляем префикс data:image/png;base64,
-            format, imgstr = base64_string.split(';base64,')
-            ext = format.split('/')[-1]  # получаем расширение (png, jpeg и т.д.)
-
-            # Декодируем base64
-            data = base64.b64decode(imgstr)
-
-            # Создаем имя файла
-            timestamp = timezone.now().strftime("%Y%m%d_%H%M%S")
-            filename = f'banner_{banner.id}_{timestamp}.{ext}'
-
-            # Сохраняем изображение
-            banner.image.save(filename, ContentFile(data), save=True)
-
-            # Сохраняем base64 в отдельное поле (опционально)
-            banner.image_base64 = base64_string
-            banner.save()
-
-        except Exception as e:
-            print(f"Ошибка при сохранении изображения: {e}")
 
 
 # views.py
@@ -150,65 +124,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect
 from .models import BannerOrder
 from .forms import BannerOrderForm
-import re
 
-
-def create_banner_view(request):
-    if request.method == 'POST':
-        try:
-            # Получаем JSON данные
-            data = json.loads(request.body)
-
-            # Извлекаем данные
-            width = data.get('width')
-            height = data.get('height')
-            text = data.get('text')
-            phone = data.get('phone')
-            bg_color = data.get('bg_color')
-            text_color = data.get('text_color')
-            grommet_type = data.get('grommet_type')
-            image_data = data.get('image_data')
-
-            # Обрабатываем base64 изображение
-            if image_data:
-                # Удаляем префикс data:image/png;base64,
-                format, imgstr = image_data.split(';base64,')
-                ext = format.split('/')[-1]
-
-                # Декодируем base64
-                image_data = base64.b64decode(imgstr)
-                image_file = ContentFile(image_data, name=f'banner_{text}.{ext}')
-
-            # Создаем объект заказа
-            order = BannerOrder(
-                width=width,
-                height=height,
-                text=text,
-                phone=phone,
-                bg_color=bg_color,
-                text_color=text_color,
-                grommet_type=grommet_type,
-            )
-
-            if image_file:
-                order.image.save(f'banner_{text}.{ext}', image_file)
-
-            order.save()
-
-            return JsonResponse({
-                'success': True,
-                'order_id': order.id,
-                'message': 'Заказ успешно создан'
-            })
-
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=400)
-
-    # GET запрос - показать страницу
-    return render(request, 'orders/banner.html')
 
 
 # Или с использованием Django форм:
@@ -241,3 +157,120 @@ def order_banner(request):
 class Banners_ListView(LoginRequiredMixin, ListView):
     model = BannerOrder
     template_name = 'orders/banner_list.html'
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+
+@csrf_exempt
+def submit_banner_order(request):
+    print(request)
+    print(request.POST.get('text'))
+    print(request.FILES.get('canvas_image'))
+
+    if request.method == 'POST':
+        try:
+            # Получаем данные из формы
+            width = request.POST.get('width')
+            height = request.POST.get('height')
+            text = request.POST.get('text')
+            phone = request.POST.get('phone')
+            bg_color = request.POST.get('bg_color')
+            text_color = request.POST.get('text_color')
+            grommet_type = request.POST.get('grommet_type')
+
+            # Получаем изображение из canvas
+            canvas_image = request.FILES.get('canvas_image')
+
+            if canvas_image:
+                # Здесь можно сохранить данные в базу или отправить на почту
+                # Например:
+                from .models import BannerOrder
+
+                order = BannerOrder.objects.create(
+                    width=width,
+                    height=height,
+                    text=text,
+                    phone=phone,
+                    bg_color=bg_color,
+                    text_color=text_color,
+                    grommet_type=grommet_type,
+                    image=canvas_image
+                )
+
+                # Или отправить уведомление на почту
+                # send_mail(...)
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Заказ принят в обработку',
+                    'order_id': order.id
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Изображение не получено'
+                }, status=400)
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Неверный метод запроса'
+    }, status=405)
+
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+
+@csrf_exempt  # или используйте декоратор csrf_protect с правильной передачей токена
+def upload_view(request):
+    print(request)
+    if request.method == 'POST':
+        # Получаем обычные поля формы
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+
+        # Получаем изображение из canvas
+        canvas_image = request.FILES.get('canvas_image')
+
+        if canvas_image:
+            # Обрабатываем изображение
+            # Пример сохранения в модель
+            from .models import MyModel
+            from django.core.files.base import ContentFile
+
+            # Создаем запись
+            obj = MyModel.objects.create(
+                title=title,
+                description=description
+            )
+
+            # Сохраняем изображение
+            obj.canvas_image.save(
+                f'canvas_{obj.id}.png',
+                ContentFile(canvas_image.read())
+            )
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Данные успешно сохранены'
+            })
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Неверный запрос'
+    }, status=400)
+
+def up(request):
+    return render(request, 'orders/01.html')
