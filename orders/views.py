@@ -1,12 +1,8 @@
-from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
-from django.core.files.base import ContentFile
-from django.utils import timezone
-import json
-import base64
 from .models import Banner
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 class BannerGeneratorView(View):
@@ -115,11 +111,6 @@ class BannerDetailView(LoginRequiredMixin, DetailView):
         return Banner.objects.filter(user=self.request.user)
 
 
-# views.py
-import json
-import base64
-from django.core.files.base import ContentFile
-from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect
 from .models import BannerOrder
@@ -158,11 +149,11 @@ class Banners_ListView(LoginRequiredMixin, ListView):
     model = BannerOrder
     template_name = 'orders/banner_list.html'
 
+    def get_queryset(self):
+        # Пользователь может видеть только свои баннеры
+        return BannerOrder.objects.filter(user=self.request.user)
 
-# views.py
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
+
 
 
 @csrf_exempt
