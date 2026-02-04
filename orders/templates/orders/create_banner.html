@@ -247,28 +247,56 @@
 
             <button type="button" id="generateBtn">Сгенерировать баннер</button>
 
-            <!-- Кнопка для отправки заказа -->
-            <button type="button" id="submitOrderBtn" class="submit-btn">Отправить заказ</button>
         </div>
 
         <div class="preview-container">
             <canvas id="bannerCanvas"></canvas>
             <div class="info-text" id="sizeInfo"></div>
-            <button type="button" id="downloadBtn" class="download-btn" disabled>Скачать баннер</button>
+            <div class="info-price" id="InfoPrice"></div>
+                <div class="result" id="result">
+            <h3>Результат расчета</h3>
+            <div class="result-item">
+                <span class="result-label">Площадь баннера:</span>
+                <span class="result-value" id="areaValue">0 м²</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Количество люверсов:</span>
+                <span class="result-value" id="luversCount">0 шт</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Стоимость баннера:</span>
+                <span class="result-value price" id="bannerCost">0 ₽</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Стоимость люверсов:</span>
+                <span class="result-value price" id="luversCost">0 ₽</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Итого стоимость:</span>
+                <span class="result-value price" id="totalCost">0 ₽</span>
+            </div>
+        </div>
+            
+            <button type="button" id="submitOrderBtn" class="submit-btn">Заказать</button>
+
         </div>
     </div>
 </form>
 
 
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Цены
+        const PRICE_PER_SQM = 1300; // цена за 1 м² баннера
+        const PRICE_PER_LUVER = 20; // цена за 1 люверс
+        const LUVER_SPACING = 0.3; // расстояние между люверсами по периметру (в метрах)
+
         const canvas = document.getElementById('bannerCanvas');
         const ctx = canvas.getContext('2d');
         const generateBtn = document.getElementById('generateBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
         const submitOrderBtn = document.getElementById('submitOrderBtn');
         const sizeInfo = document.getElementById('sizeInfo');
+        const InfoPrice = document.getElementById('InfoPrice');
         const messageContainer = document.getElementById('messageContainer');
         const form = document.getElementById('bannerForm');
         const user = document.getElementById('userDropdown');
@@ -425,6 +453,11 @@
             // Обновляем информацию о размерах
             sizeInfo.textContent = `Размер: ${widthMM}×${heightMM} мм (${Math.round(widthPx)}×${Math.round(heightPx)} px)`;
 
+            // Стоимость баннера примерно
+            InfoPrice.textContent = `Стоимость: ${(widthMM * heightMM) / 1000000 * PRICE_PER_SQM} руб.`
+            
+
+
             // Очищаем canvas
             ctx.clearRect(0, 0, widthPx, heightPx);
 
@@ -440,11 +473,7 @@
             }
             // Для 'none' ничего не рисуем
 
-            // Если нет текста и телефона, выходим
-            if (!text && !phone) {
-                downloadBtn.disabled = false;
-                return;
-            }
+
 
             // Настраиваем стиль текста
             ctx.fillStyle = textColor;
@@ -487,9 +516,12 @@
                 const phoneY = startY + (text ? textFontSize + 10 : 0) + (phoneFontSize / 2);
                 ctx.fillText(phone, widthPx / 2, phoneY);
             }
+            calculateCost();
 
             // Активируем кнопку скачивания
-            downloadBtn.disabled = false;
+<!--            downloadBtn.disabled = false;-->
+
+            
         }
 
         // Функция для отправки данных формы и изображения
@@ -566,13 +598,7 @@
             radio.addEventListener('change', generateBanner);
         });
 
-        // Обработчик для кнопки скачивания
-        downloadBtn.addEventListener('click', function () {
-            const link = document.createElement('a');
-            link.download = 'banner.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
+
 
         // Генерируем начальный баннер
         generateBanner();
@@ -584,5 +610,81 @@
             }
         });
     });
+
+
+// Функция расчета количества люверсов по периметру
+    function calculateLuversCount(widthMM, lengthMM, type) {
+        switch(type) {
+            case '1': // Нет люверсов
+                return 0;
+                
+            case '2': // По углам
+                return 4;
+                
+            case '3': // По периметру
+                // Расчет количества люверсов по периметру с шагом LUVER_SPACING
+                // Формула: 2 * (ширина/шаг + 1) + 2 * (длина/шаг + 1) - 4 (углы не дублируем)
+                const luversWidth = Math.max(2, Math.ceil(width / LUVER_SPACING) + 1);
+                const luversLength = Math.max(2, Math.ceil(length / LUVER_SPACING) + 1);
+                
+                // Общее количество: 2 стороны по ширине + 2 стороны по длине - 4 угла (учтены дважды)
+                return 2 * (luversWidth + luversLength) - 4;
+                
+            default:
+                return 0;
+        }
+    }
+
+
+
+
+ // Основная функция расчета
+        function calculateCost() {
+            // Получаем значения из формы
+            const width = parseFloat(document.getElementById('widthInput').value);
+            
+            const length = parseFloat(document.getElementById('lengthInput').value);
+            const luversType = document.querySelector('input[name="luvers"]:checked').value;
+            console.log(`[calculateCost] , width ${width}`)
+
+            // Проверка введенных данных
+            if (isNaN(width) || width <= 0 || isNaN(length) || length <= 0) {
+                alert('Пожалуйста, введите корректные значения ширины и длины (положительные числа)');
+                return;
+            }
+
+            // Вычисляем площадь
+            const area = width * length;
+
+            // Вычисляем количество люверсов
+            const luversCount = calculateLuversCount(width, length, luversType);
+
+            // Вычисляем стоимость
+            const bannerCost = area * PRICE_PER_SQM;
+            const luversCost = luversCount * PRICE_PER_LUVER;
+            const totalCost = bannerCost + luversCost;
+
+            // Форматируем числа для вывода
+            const formatNumber = (num) => {
+                return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+            };
+
+            // Отображаем результаты
+            document.getElementById('areaValue').textContent = `${formatNumber(area)} м²`;
+            document.getElementById('luversCount').textContent = `${luversCount} шт`;
+            document.getElementById('bannerCost').textContent = `${formatNumber(bannerCost)} ₽`;
+            document.getElementById('luversCost').textContent = `${formatNumber(luversCost)} ₽`;
+            document.getElementById('totalCost').textContent = `${formatNumber(totalCost)} ₽`;
+
+            // Показываем блок с результатами
+            document.getElementById('result').style.display = 'block';
+
+            // Прокручиваем к результатам
+            document.getElementById('result').scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            });
+        }
+
 </script>
 {% endblock %}
