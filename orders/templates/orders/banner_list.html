@@ -28,6 +28,7 @@
                 <div class="banner-info">
                     <h3>Баннер #{{ banner.id }}</h3>
                     <p><strong>Размер:</strong> {{ banner.width }}×{{ banner.height }} мм</p>
+                    <p><strong>Стоимость:</strong> {{ banner.price_banner }} руб.</p>
                     <p><strong>Текст:</strong> {{ banner.text|default:"-" }}</p>
                     <p><strong>Телефон:</strong> {{ banner.phone|default:"-" }}</p>
                     <p><strong>Дата:</strong> {{ banner.created_at|date:"d.m.Y H:i" }}</p>

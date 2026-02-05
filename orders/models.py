@@ -188,6 +188,7 @@ class BannerOrder(models.Model):
     ]
 
     width = models.IntegerField(verbose_name="Ширина (мм)")
+    price_banner = models.ImageField(verbose_name='Стоимость баннера')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     height = models.IntegerField(verbose_name="Высота (мм)")
     text = models.CharField(max_length=255, verbose_name="Текст баннера")

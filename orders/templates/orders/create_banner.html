@@ -206,6 +206,8 @@
                 <label for="text">Текст баннера:</label>
                 <input type="text" id="text" name="text" value="АРЕНДА">
                 <input type="hidden" id="user" name="user" value={{user}}>
+                <input type="hidden" id="totalCostInput" name="total_cost" value="">
+
             </div>
 
             <div class="form-group">
@@ -254,25 +256,16 @@
             <div class="info-text" id="sizeInfo"></div>
                 <div class="result" id="result">
             <h3>Результат расчета</h3>
-            <!-- <div class="result-item">
-                <span class="result-label">Площадь баннера:</span>
-                <span class="result-value" id="areaValue">0 м²</span>
-            </div> -->
+         
             <div class="result-item">
                 <span class="result-label">Количество люверсов:</span>
                 <span class="result-value" id="luversCount">0 шт</span>
             </div>
-            <!-- <div class="result-item">
-                <span class="result-label">Стоимость баннера:</span>
-                <span class="result-value price" id="bannerCost">0 ₽</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Стоимость люверсов:</span>
-                <span class="result-value price" id="luversCost">0 ₽</span>
-            </div> -->
+      
             <div class="result-item">
                 <span class="result-label">Итого стоимость:</span>
                 <span class="result-value price" id="totalCost">0 ₽</span>
+
             </div>
         </div>
             
@@ -299,6 +292,9 @@
         const form = document.getElementById('bannerForm');
         const user = document.getElementById('userDropdown');
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        let currentTotalCost = 0;
+
+
 
         // Элементы формы
         const widthInput = document.getElementById('width');
@@ -306,6 +302,7 @@
         const textInput = document.getElementById('text');
         const phoneInput = document.getElementById('phone');
         const bgColorInput = document.getElementById('bgColor');
+        const totalCost = document.getElementById('totalCost');
         const textColorInput = document.getElementById('textColor');
         const grommetRadios = document.querySelectorAll('input[name="grommet_type"]');
 
@@ -358,6 +355,7 @@
             if (totalCost <= MINIMAL_PRICE) {
                 totalCost = MINIMAL_PRICE;
             }
+            currentTotalCost = totalCost;
 
             
            
@@ -579,6 +577,7 @@
                 ctx.fillText(phone, widthPx / 2, phoneY);
             }
             calculateCost(widthMM, heightMM, grommetType);
+            console.log(totalCost, typeof(totalCost))
             
 
             // Активируем кнопку скачивания
@@ -588,7 +587,7 @@
         }
 
         // Функция для отправки данных формы и изображения
-        function submitOrder() {
+        function submitOrder(total_cost) {
             // Сначала генерируем баннер, чтобы canvas был актуальным
             generateBanner();
 
@@ -605,6 +604,9 @@
 
                 // Добавляем файл в FormData
                 formData.append('canvas_image', file);
+            formData.append('total_cost', currentTotalCost);
+
+
 
                 // Отправляем на сервер
                 fetch('{% url "submit_banner_order" %}', {

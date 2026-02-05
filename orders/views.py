@@ -4,7 +4,6 @@ from .models import Banner
 from django.views.decorators.csrf import csrf_exempt
 
 
-
 class BannerGeneratorView(View):
     """View для генерации и сохранения баннеров"""
 
@@ -96,7 +95,6 @@ class BannerGeneratorView(View):
         return base_price
 
 
-
 # views.py
 from django.views.generic import DetailView, ListView
 
@@ -115,7 +113,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, redirect
 from .models import BannerOrder
 from .forms import BannerOrderForm
-
 
 
 # Или с использованием Django форм:
@@ -154,12 +151,9 @@ class Banners_ListView(LoginRequiredMixin, ListView):
         return BannerOrder.objects.filter(user=self.request.user)
 
 
-
-
 @csrf_exempt
 def submit_banner_order(request):
     print(request.POST.get('text'))
-    print(request.POST.get('user'))
     print(request.user)
     print(request.FILES.get('canvas_image'))
 
@@ -174,6 +168,8 @@ def submit_banner_order(request):
             bg_color = request.POST.get('bg_color')
             text_color = request.POST.get('text_color')
             grommet_type = request.POST.get('grommet_type')
+            price_banner = request.POST.get('total_cost')
+            print(price_banner)
 
             # Получаем изображение из canvas
             canvas_image = request.FILES.get('canvas_image')
@@ -192,7 +188,8 @@ def submit_banner_order(request):
                     bg_color=bg_color,
                     text_color=text_color,
                     grommet_type=grommet_type,
-                    image=canvas_image
+                    image=canvas_image,
+                    price_banner=price_banner
                 )
 
                 # Или отправить уведомление на почту
