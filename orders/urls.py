@@ -6,8 +6,8 @@ from .views import *
 
 urlpatterns = [
                   path('', BannerGeneratorView.as_view(), name='banner_generator'),
-                  path('banners_list/', Banners_ListView.as_view(), name='banners_list'),
+                  path('banners_list/', BannersListView.as_view(), name='banners_list'),
                   path('submit-banner-order/', submit_banner_order, name='submit_banner_order'),
-                  path('upload/', upload_view, name='upload'),
+                  path("banner_delete/<pk>", BannerDeleteView.as_view(), name="banner_delete"),
 
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

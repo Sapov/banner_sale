@@ -2,6 +2,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
+from django.db import models
+from django.core.files.base import ContentFile
+from io import BytesIO
+from PIL import Image
+import base64
+
 
 from django.conf import settings
 
@@ -69,12 +75,6 @@ class Order(models.Model):
         return reverse("orders:add_file_in_order", args=[self.id])
 
 
-from django.db import models
-from django.core.files.base import ContentFile
-from io import BytesIO
-from PIL import Image
-import base64
-
 
 class Banner(models.Model):
     GROMMET_CHOICES = [
@@ -114,31 +114,7 @@ class Banner(models.Model):
     def __str__(self):
         return f"Баннер {self.id} - {self.width}x{self.height}см"
 
-    def save_image_from_base64(self, base64_string):
-        """Сохраняет изображение из base64 строки"""
-        if not base64_string:
-            return
 
-        # Удаляем префикс data:image/png;base64,
-        if 'base64,' in base64_string:
-            format, imgstr = base64_string.split(';base64,')
-            ext = format.split('/')[-1]
-        else:
-            imgstr = base64_string
-            ext = 'png'
-
-        # Декодируем base64
-        data = base64.b64decode(imgstr)
-
-        # Создаем изображение в памяти
-        image = Image.open(BytesIO(data))
-
-        # Сохраняем в поле image
-        filename = f'banner_{self.id}_{self.created_at.strftime("%Y%m%d_%H%M%S")}.{ext}'
-        self.image.save(filename, ContentFile(data), save=False)
-
-        # Сохраняем base64 в отдельное поле (опционально)
-        self.image_base64 = base64_string
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Ордер")

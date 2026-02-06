@@ -355,7 +355,7 @@
             if (totalCost <= MINIMAL_PRICE) {
                 totalCost = MINIMAL_PRICE;
             }
-            currentTotalCost = totalCost;
+            currentTotalCost = Math.ceil(totalCost);
 
             
            
@@ -451,6 +451,8 @@
                     const yPx = mmToPx(yMM);
                         drawGrommet(widthPx - marginPx, yPx, grommetRadiusPx);
                 }
+            const allGromet = topGrommets.length + bottomGrommets.length + leftGrommets.length + rightGrommets.length
+            console.log('ALL Gromets', allGromet - 4, 'шт.')
             });
         }
 
@@ -577,7 +579,6 @@
                 ctx.fillText(phone, widthPx / 2, phoneY);
             }
             calculateCost(widthMM, heightMM, grommetType);
-            console.log(totalCost, typeof(totalCost))
             
 
             // Активируем кнопку скачивания
@@ -629,7 +630,7 @@
                         setTimeout(() => {
                             messageContainer.style.display = 'none';
                         }, 5000);
-                                    window.location.href = '/banners_list/';
+                                    window.location.href = '{% url "banners_list" %}';
 
                     } else {
                         showMessage('Ошибка: ' + data.message, 'error');
@@ -693,7 +694,7 @@
                     const luversLength = Math.max(2, Math.ceil(lengthMM / GROMMET_SPACING_MM) + 1);
                     
                     // Общее количество: 2 стороны по ширине + 2 стороны по длине - 4 угла (учтены дважды)
-                    return 2 * (luversWidth + luversLength) - 4;
+                    return 2 * (luversWidth + luversLength) - 8;
                     
                 default:
                     return 0;
