@@ -2,9 +2,7 @@
 {% load i18n %}
 {% load account socialaccount %}
 {% load crispy_forms_tags %}
-
 {% load thumbnail %}
-
 
 {% block content %}
 
@@ -21,9 +19,8 @@
         <div class="banner-card">
             <div class="banner-image">
                 {% if banner.image %}
-                <img src="{% thumbnail banner.image 200x0 %}" alt="" />
-
-
+                <img src="{% thumbnail banner.image 200x0 %}" alt="Баннер {{ banner.id }}"
+                     data-full-image="{{ banner.image.url }}">
                 {% else %}
                 <div class="no-image">Нет изображения</div>
                 {% endif %}
@@ -37,26 +34,32 @@
                 <p><strong>Дата:</strong> {{ banner.created_at|date:"d.m.Y H:i" }}</p>
 
                 <div class="banner-colors">
-                    <strong>Цвет фона:</strong><span class="color-box" style="background-color: {{ banner.bg_color }}"></span>
-                    <strong>Цвет текста:</strong><span class="color-box" style="background-color: {{ banner.text_color }}"></span>
+                    <strong>Цвет фона:</strong><span class="color-box"
+                                                     style="background-color: {{ banner.bg_color }}"></span>
+                    <strong>Цвет текста:</strong><span class="color-box"
+                                                       style="background-color: {{ banner.text_color }}"></span>
                 </div>
                 <h4><strong>Стоимость:</strong> {{ banner.price_banner }} руб.</h4>
 
-                <!-- Если нужны действия, можно добавить здесь -->
-
                 <div class="banner-actions">
-                    <a href="#" class="btn-view">Просмотр</a>
-
-
-
-
-
+                    <button class="btn-view" data-image-url="{{ banner.image.url }}">Просмотр</button>
                     <a href="{% url 'banner_delete' banner.id %}" class="btn-delete">Удалить</a>
                 </div>
-            </div> <!-- Закрываем banner-info -->
-        </div> <!-- Закрываем banner-card -->
+                <div class="banner-actions">
+                    <a href="#" class="btn-choice">Выбрать ПВЗ доставки</a>
+                </div>
+            </div>
+        </div>
         {% endfor %}
     </div>
+
+    <!-- Модальное окно для просмотра изображения -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modalImage">
+        <div id="modalCaption"></div>
+    </div>
+
     {% else %}
     <div class="empty-state">
         <h2>😔 Пока нет загруженных баннеров</h2>
@@ -103,12 +106,18 @@
         height: 200px;
         overflow: hidden;
         background: #f5f5f5;
+        cursor: pointer;
     }
 
     .banner-image img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .banner-image img:hover {
+        transform: scale(1.05);
     }
 
     .no-image {
@@ -139,6 +148,7 @@
         display: flex;
         gap: 10px;
         margin: 15px 0;
+        align-items: center;
     }
 
     .color-box {
@@ -154,7 +164,7 @@
         margin-top: 20px;
     }
 
-    .btn-view, .btn-delete {
+    .btn-view, .btn-delete, .btn-choice {
         flex: 1;
         text-align: center;
         padding: 10px;
@@ -162,6 +172,9 @@
         text-decoration: none;
         font-size: 14px;
         transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
     }
 
     .btn-view {
@@ -180,6 +193,15 @@
 
     .btn-delete:hover {
         background: #d32f2f;
+    }
+
+    .btn-choice {
+        background: #ff9800;
+        color: white;
+    }
+
+    .btn-choice:hover {
+        background: #f57c00;
     }
 
     .empty-state {
@@ -210,5 +232,193 @@
     .btn-primary:hover {
         background: #0b7dda;
     }
+
+    /* Стили для модального окна */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-content {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+    }
+
+    .modal.show .modal-content {
+        transform: scale(1);
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 20px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.3s ease;
+        z-index: 1001;
+    }
+
+    .modal-close:hover {
+        color: #bbb;
+    }
+
+    #modalCaption {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        color: white;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        font-size: 16px;
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Получаем все кнопки просмотра
+    const viewButtons = document.querySelectorAll('.btn-view');
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalClose = document.querySelector('.modal-close');
+    const modalCaption = document.getElementById('modalCaption');
+
+    // Функция для открытия модального окна
+    function openModal(imageUrl, caption = '') {
+        modalImage.src = imageUrl;
+        modalImage.alt = caption;
+        modalCaption.textContent = caption;
+
+        // Показываем модальное окно с небольшой задержкой для анимации
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Отключаем прокрутку страницы
+    }
+
+    // Функция для закрытия модального окна
+    function closeModal() {
+        modal.classList.remove('show');
+        document.body.style.overflow = ''; // Восстанавливаем прокрутку
+    }
+
+    // Добавляем обработчики событий на кнопки просмотра
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const imageUrl = this.getAttribute('data-image-url');
+            const bannerId = this.closest('.banner-card').querySelector('h3').textContent;
+            openModal(imageUrl, bannerId);
+        });
+    });
+
+    // Также открываем при клике на само изображение в карточке
+    document.querySelectorAll('.banner-image img').forEach(img => {
+        img.addEventListener('click', function() {
+            const fullImageUrl = this.getAttribute('data-full-image') || this.src;
+            const bannerId = this.closest('.banner-card').querySelector('h3').textContent;
+            openModal(fullImageUrl, bannerId);
+        });
+    });
+
+    // Закрытие по клику на крестик
+    modalClose.addEventListener('click', closeModal);
+
+    // Закрытие по клику на фон модального окна
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Закрытие по нажатию клавиши Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modal.classList.contains('show')) {
+            closeModal();
+        }
+    });
+
+    // Оптимизация загрузки больших изображений
+    modalImage.addEventListener('load', function() {
+        // Можно добавить индикатор загрузки
+        console.log('Изображение загружено');
+    });
+
+    modalImage.addEventListener('error', function() {
+        console.error('Ошибка загрузки изображения');
+        modalCaption.textContent = 'Ошибка загрузки изображения';
+    });
+});
+
+// Дополнительная функция для полноэкранного режима (Native Fullscreen API)
+function toggleFullscreen(element) {
+    if (!document.fullscreenElement) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) { /* Safari */
+            element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { /* IE11 */
+            element.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+            document.msExitFullscreen();
+        }
+    }
+}
+
+// Если хотите добавить кнопку полноэкранного режима внутри модального окна:
+function addFullscreenButton() {
+    const modalImage = document.getElementById('modalImage');
+
+    // Создаем кнопку полноэкранного режима
+    const fullscreenBtn = document.createElement('button');
+    fullscreenBtn.innerHTML = '⛶';
+    fullscreenBtn.style.position = 'absolute';
+    fullscreenBtn.style.top = '20px';
+    fullscreenBtn.style.left = '35px';
+    fullscreenBtn.style.background = 'rgba(0,0,0,0.7)';
+    fullscreenBtn.style.color = 'white';
+    fullscreenBtn.style.border = 'none';
+    fullscreenBtn.style.borderRadius = '4px';
+    fullscreenBtn.style.padding = '10px 15px';
+    fullscreenBtn.style.fontSize = '20px';
+    fullscreenBtn.style.cursor = 'pointer';
+    fullscreenBtn.style.zIndex = '1001';
+    fullscreenBtn.title = 'Полноэкранный режим';
+
+    fullscreenBtn.addEventListener('click', function() {
+        toggleFullscreen(modalImage);
+    });
+
+    document.getElementById('imageModal').appendChild(fullscreenBtn);
+}
+
+// Вызовите эту функцию после загрузки DOM если нужно
+// document.addEventListener('DOMContentLoaded', addFullscreenButton);
+</script>
 {% endblock %}
