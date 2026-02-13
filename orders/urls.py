@@ -10,4 +10,7 @@ urlpatterns = [
                   path('submit-banner-order/', submit_banner_order, name='submit_banner_order'),
                   path("banner_delete/<pk>", BannerDeleteView.as_view(), name="banner_delete"),
 
+                  path("delivery", delivery, name="delivery"),
+
+
               ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

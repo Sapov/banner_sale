@@ -145,3 +145,8 @@ def submit_banner_order(request):
         'status': 'error',
         'message': 'Неверный метод запроса'
     }, status=405)
+
+
+def delivery(request):
+    #https://yandex.ru/support/delivery-profile/ru/modules/widgets#widget-setup
+    return render(request, 'orders/delivery.html')
