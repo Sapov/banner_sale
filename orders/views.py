@@ -83,9 +83,6 @@ class BannerDeleteView(DeleteView):
 
 @csrf_exempt
 def submit_banner_order(request):
-    print(request.POST.get('text'))
-    print(request.user)
-    print(request.FILES.get('canvas_image'))
 
     if request.method == 'POST':
         try:
